@@ -77,9 +77,9 @@ class MainActivity : Activity() {
 
     }
 
-    internal class FontGenOnClickListener(private val mainActivity: MainActivity, private val `val$screen`: ImageView) : View.OnClickListener {
+    internal class FontGenOnClickListener(private val mainActivity: MainActivity, private val screenImageView: ImageView) : View.OnClickListener {
         override fun onClick(view: View) {
-            `val$screen`.setImageBitmap(mainActivity.getSample(mainActivity.prex, mainActivity.prey + 13, mainActivity.presize))
+            screenImageView.setImageBitmap(mainActivity.getSample(mainActivity.prex, mainActivity.prey + 13, mainActivity.presize))
             when (view.id) {
                 R.id.sizem -> {
                     if (this.mainActivity.sizes.progress != 0) {
