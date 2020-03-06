@@ -21,11 +21,8 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.*
 import android.widget.SeekBar.OnSeekBarChangeListener
-import ar.com.daidalos.afiledialog.FileChooserDialog
-import java.io.BufferedOutputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.io.OutputStream
+import com.obsez.android.lib.filechooser.ChooserDialog
+import java.io.*
 
 class MainActivity : Activity() {
     var base = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888)
@@ -158,14 +155,15 @@ class MainActivity : Activity() {
                     this.mainActivity.w += 16
                     val myHandler = this.mainActivity.handler
                     val num = i
+
                     myHandler.sendMessage(myHandler.obtainMessage(100, num))
                     if (i == 44033) {
                         stringBuffer2 = StringBuffer()
                         stringBuffer3 = StringBuffer()
                         stringBuffer4 = StringBuffer()
-                        file = File(stringBuffer2.append(stringBuffer3.append(stringBuffer4.append(Environment.getExternalStorageDirectory()).append("/아포카토맨/FontGen/").toString()).append(current).toString()).append("/.nomedia").toString())
+                        file = File(stringBuffer2.append(stringBuffer3.append(stringBuffer4.append(Environment.getExternalStorageDirectory()).append("/affogatoman/FontGen/").toString()).append(current).toString()).append("/.nomedia").toString())
                         file3 = file
-                        file3.parentFile.mkdirs()
+                        var b = file.parentFile.mkdirs();
                         file3.createNewFile()
                     }
                     if ((i - 44032) % 16 == 15 && i != 44032) {
@@ -194,9 +192,9 @@ class MainActivity : Activity() {
                     }
                     i++
                 }
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 stringBuffer = StringBuffer()
-                val i2 = Log.i(TAG, stringBuffer.append(e).append("").toString())
+                val i2 = Log.i(TAG, e.toString())
             }
         }
 
@@ -237,6 +235,20 @@ class MainActivity : Activity() {
             try {
                 when (view.id) {
                     R.id.find -> {
+                        val fileChooserDialog = ChooserDialog(this@MainActivity)
+                                                    .withFilter(false, true, "ttf", "otf")
+                                                    .withStartFile(Environment.getExternalStorageDirectory().absolutePath)
+                                                    .withResources(R.string.choose_file, R.string.title_choose, R.string.dialog_cancel)
+                                                    .withChosenListener(object: ChooserDialog.Result {
+                                                        override fun onChoosePath(pathStr: String, file: File) {
+                                                            path.setText(file!!.absolutePath)
+                                                            tf = Typeface.createFromFile(file)
+                                                        }
+                                                    })
+                                                    .build()
+                                                    .show();
+                        Log.i("AFFO", Environment.getExternalStorageDirectory().absolutePath);
+                        /*
                         var fileChooserDialog = FileChooserDialog(this@MainActivity)
                         val fileChooserDialog3 = fileChooserDialog
                         fileChooserDialog3.setFilter(".*TTF|.*ttf")
@@ -250,6 +262,7 @@ class MainActivity : Activity() {
                             }
                         })
                         fileChooserDialog3.show()
+                        */
                         return@OnClickListener
                     }
                     R.id.setting -> {
