@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
+    <View android:layout_width="match_parent" android:layout_height="20dp" />
+    <ImageView android:id="@+id/screen2" android:layout_width="match_parent" android:layout_height="200dp" android:scaleType="fitCenter" />
+    <LinearLayout android:gravity="center" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="150dp">
+        <LinearLayout android:gravity="center" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1.0">
+            <Button android:id="@+id/sizem" android:layout_width="0dp" android:layout_height="match_parent" android:text="-" android:layout_weight="1.0" />
+            <SeekBar android:id="@+id/sizes" android:layout_width="0dp" android:layout_height="wrap_content" android:max="16" android:layout_weight="4.0" />
+            <Button android:id="@+id/sizep" android:layout_width="0dp" android:layout_height="match_parent" android:text="+" android:layout_weight="1.0" />
+        </LinearLayout>
+        <LinearLayout android:gravity="center" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1.0">
+            <Button android:id="@+id/xm" android:layout_width="0dp" android:layout_height="match_parent" android:text="-" android:layout_weight="1.0" />
+            <SeekBar android:id="@+id/xs" android:layout_width="0dp" android:layout_height="wrap_content" android:max="32" android:layout_weight="4.0" />
+            <Button android:id="@+id/xp" android:layout_width="0dp" android:layout_height="match_parent" android:text="+" android:layout_weight="1.0" />
+        </LinearLayout>
+        <LinearLayout android:gravity="center" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1.0">
+            <Button android:id="@+id/ym" android:layout_width="0dp" android:layout_height="match_parent" android:text="-" android:layout_weight="1.0" />
+            <SeekBar android:id="@+id/ys" android:layout_width="0dp" android:layout_height="wrap_content" android:max="32" android:layout_weight="4.0" />
+            <Button android:id="@+id/yp" android:layout_width="0dp" android:layout_height="match_parent" android:text="+" android:layout_weight="1.0" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
