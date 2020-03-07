@@ -4,7 +4,13 @@
     <LinearLayout android:gravity="center" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1.0">
         <TextView android:layout_width="240dp" android:layout_height="wrap_content" android:text="@string/set_ttf_file" />
         <LinearLayout android:gravity="center" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content">
-            <EditText android:id="@+id/path" android:layout_width="180dp" android:layout_height="wrap_content" android:hint="@string/path_ttf_file" />
+
+            <EditText
+                android:id="@+id/path"
+                android:layout_width="180dp"
+                android:layout_height="wrap_content"
+                android:hint="@string/path_ttf_file"
+                android:singleLine="true" />
             <Button android:id="@+id/find" android:layout_width="60dp" android:layout_height="wrap_content" android:text="@string/find_ttf_file" />
         </LinearLayout>
         <LinearLayout android:gravity="center" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content">

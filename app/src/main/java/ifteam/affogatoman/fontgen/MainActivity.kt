@@ -1,7 +1,9 @@
 package ifteam.affogatoman.fontgen
 
+import android.Manifest
 import android.app.*
 import android.content.*
+import android.content.pm.PackageManager
 import android.graphics.*
 import android.os.*
 import android.util.Log
@@ -9,7 +11,10 @@ import android.view.*
 import android.widget.*
 import android.widget.SeekBar.OnSeekBarChangeListener
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.obsez.android.lib.filechooser.ChooserDialog
+import kotlinx.android.synthetic.main.setting.*
 import java.io.*
 
 class MainActivity : AppCompatActivity() {
@@ -31,11 +36,15 @@ class MainActivity : AppCompatActivity() {
     lateinit var sizeSeekBar: SeekBar
     lateinit var xSeekBar: SeekBar
     lateinit var ySeekBar: SeekBar
+    lateinit var antiAliasSwitch: Switch
+    lateinit var onlyKoreanSwitch: Switch
 
     var settingFontSize = 0
     var settingDrawX = 0
     var settingDrawY = 0
 
+    var isAntiAlias: Boolean
+    var isOnlyKorean: Boolean
     var fontSize: Int
     var drawX: Int
     var drawY: Int
@@ -97,6 +106,8 @@ class MainActivity : AppCompatActivity() {
                         this.mainActivity.ySeekBar.incrementProgressBy(1)
                     }
                 }
+                R.id.anti_alias -> this.mainActivity.isAntiAlias = (view as Switch).isChecked
+                R.id.only_korean -> this.mainActivity.isOnlyKorean = (view as Switch).isChecked
                 else -> { }
             }
             sampleImageView.setImageBitmap(mainActivity.getSample(mainActivity.settingDrawX, mainActivity.settingDrawY + 13, mainActivity.settingFontSize))
@@ -107,44 +118,51 @@ class MainActivity : AppCompatActivity() {
     internal inner class FontGenRunnable(private val mainActivity: MainActivity, private val fontSize_: Int) : Runnable {
         var current = System.currentTimeMillis()
         var glyph = 0xAC
+        var maxCount = '힣'.toInt()
+        var startChar = '가'.toInt()
+        var i = 44032
+
         override fun run() {
             try {
-                //Disabled All FileI/O methods due to not-working-error.
-
+                if (!this.mainActivity.isOnlyKorean) {
+                    glyph = 0x00
+                    maxCount = 256*256-1
+                    i = 0
+                    startChar = 0
+                }
                 this.mainActivity.baseBitmap = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888)
                 this.mainActivity.canvas = Canvas(this.mainActivity.baseBitmap)
                 if (this.mainActivity.typeFace != null)
                     this.mainActivity.paint.typeface = this.mainActivity.typeFace
                 this.mainActivity.paint.color = Color.WHITE
                 this.mainActivity.paint.textSize = fontSize_.toFloat()
-                this.mainActivity.paint.isAntiAlias = true
-                var i = 44032
-                while (i <= 55203) {
-                    //var file: File
-                    Thread.sleep(1)
+                this.mainActivity.paint.isAntiAlias = this.mainActivity.isAntiAlias
+                while (i <= maxCount) {
+                    var file: File
+                    //Thread.sleep(1)
                     this.mainActivity.canvas.drawText(i.toChar().toString(), this.mainActivity.drawX.toFloat(), this.mainActivity.drawY.toFloat(), this.mainActivity.paint)
                     this.mainActivity.drawX += 16
                     val myHandler = this.mainActivity.handler
 
-                    myHandler.sendMessage(myHandler.obtainMessage(100, i))
-                    if (i == 44033) {
-                        //file = File(Environment.getExternalStorageDirectory().absolutePath+"/FontGen/"+current.toString()+"/.nomedia")
-                        //file.parentFile.mkdirs()
-                        //file.createNewFile()
+                    myHandler.sendMessage(myHandler.obtainMessage(100, arrayOf(i, maxCount)))
+                    if (i == startChar+1) {
+                        file = File("${Environment.getExternalStorageDirectory().absolutePath}/FontGen/$current/.nomedia")
+                        file.parentFile.mkdirs()
+                        file.createNewFile()
                     }
-                    if ((i - 44032) % 16 == 15 && i != 44032) {
+                    if ((i - startChar) % 16 == 15 && i != startChar) {
                         this.mainActivity.drawX = this.mainActivity.settingDrawX;
                         this.mainActivity.drawY += 16
                     }
-                    if (this.mainActivity.drawY > 254 || i == 55203) {
-                        //file = File(Environment.getExternalStorageDirectory().absolutePath+"/FontGen/"+current.toString()+"/glyph_"+"%X".format(glyph)+".png")
-                        //file.parentFile.mkdirs()
-                        //val fileOutputStream: OutputStream = FileOutputStream(file)
-                        //val bufferedOutputStream: OutputStream = BufferedOutputStream(fileOutputStream)
-                        //this.mainActivity.baseBitmap.compress(CompressFormat.PNG, 100, bufferedOutputStream)
-                        //bufferedOutputStream.close()
-                        //fileOutputStream.close()
-                        if (i != 55203) {
+                    if (this.mainActivity.drawY > 254 || i == maxCount) {
+                        file = File("${Environment.getExternalStorageDirectory().absolutePath}/FontGen/$current/glyph_"+"%02X".format(glyph)+".png")
+                        file.parentFile.mkdirs()
+                        val fileOutputStream: OutputStream = FileOutputStream(file)
+                        val bufferedOutputStream: OutputStream = BufferedOutputStream(fileOutputStream)
+                        this.mainActivity.baseBitmap.compress(Bitmap.CompressFormat.PNG, 100, bufferedOutputStream)
+                        bufferedOutputStream.close()
+                        fileOutputStream.close()
+                        if (i != maxCount) {
                             this.mainActivity.baseBitmap.eraseColor(Color.TRANSPARENT)
                         }
                         this.mainActivity.drawY = this.mainActivity.settingDrawY + 13
@@ -163,10 +181,12 @@ class MainActivity : AppCompatActivity() {
         override fun handleMessage(message: Message) {
             if (message.what == 100) {
                 screenImageView!!.setImageBitmap(baseBitmap)
-                characterProgressDialog!!.setMessage(getString(R.string.current_char)+(message.obj as Int).toChar().toString())
+                characterProgressDialog!!.setMessage(getString(R.string.current_char)+(message.obj as Array<Int>)[0].toChar().toString())
+                characterProgressBar!!.max = (message.obj as Array<Int>)[1]
                 characterProgressBar!!.incrementProgressBy(1)
+                characterProgressDialog!!.max = (message.obj as Array<Int>)[1]
                 characterProgressDialog!!.incrementProgressBy(1)
-                if (message.obj as Int == 55203) {
+                if ((message.obj as Array<Int>)[0] == (message.obj as Array<Int>)[1]) {
                     makeButton.isEnabled = true
                     settingButton.isEnabled = true
                     characterProgressBar!!.progress = 0
@@ -181,6 +201,9 @@ class MainActivity : AppCompatActivity() {
 
     public override fun onCreate(bundle: Bundle?) {
         super.onCreate(bundle)
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 0)
 
         setContentView(R.layout.main)
         characterProgressBar = findViewById(R.id.progress)
@@ -202,21 +225,6 @@ class MainActivity : AppCompatActivity() {
                                 }
                                 .build()
                                 .show()
-                        /*
-                        var fileChooserDialog = FileChooserDialog(this@MainActivity)
-                        val fileChooserDialog3 = fileChooserDialog
-                        fileChooserDialog3.setFilter(".*TTF|.*ttf")
-                        fileChooserDialog = fileChooserDialog3
-                        fileChooserDialog.addListener(object : FileChooserDialog.OnFileSelectedListener {
-                            override fun onFileSelected(source: Dialog?, folder: File?, name: String?) {}
-                            override fun onFileSelected(source: Dialog, file: File?) {
-                                path.setText(file!!.absolutePath)
-                                tf = Typeface.createFromFile(file)
-                                source.hide()
-                            }
-                        })
-                        fileChooserDialog3.show()
-                        */
                     }
                     R.id.setting -> showSettingDialog()
                     R.id.make -> {
@@ -243,6 +251,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSettingDialog() {
+        val tempIsAntiAlias: Boolean = isAntiAlias
+        val tempIsOnlyKorean: Boolean = isOnlyKorean
         settingDrawX = drawX
         settingDrawY = drawY - 13
         settingFontSize = fontSize
@@ -251,6 +261,10 @@ class MainActivity : AppCompatActivity() {
         sizeSeekBar = inflate.findViewById(R.id.sizes)
         xSeekBar = inflate.findViewById(R.id.xs)
         ySeekBar = inflate.findViewById(R.id.ys)
+        antiAliasSwitch = inflate.findViewById(R.id.anti_alias)
+        antiAliasSwitch.isChecked = isAntiAlias
+        onlyKoreanSwitch = inflate.findViewById(R.id.only_korean)
+        onlyKoreanSwitch.isChecked = isOnlyKorean
         sizeSeekBar.progress = fontSize
         xSeekBar.progress = drawX + 16
         ySeekBar.progress = drawY + 3
@@ -272,6 +286,8 @@ class MainActivity : AppCompatActivity() {
         button4.setOnClickListener(fontGenOnClickListener)
         button5.setOnClickListener(fontGenOnClickListener)
         button6.setOnClickListener(fontGenOnClickListener)
+        antiAliasSwitch.setOnClickListener(fontGenOnClickListener)
+        onlyKoreanSwitch.setOnClickListener(fontGenOnClickListener)
         val builder = AlertDialog.Builder(this)
                 .setView(inflate)
                 .setTitle(R.string.setting_title)
@@ -280,7 +296,10 @@ class MainActivity : AppCompatActivity() {
                     drawY = settingDrawY + 13
                     fontSize = settingFontSize
                 }
-                .setNegativeButton(R.string.cancel, null)
+                .setNegativeButton(R.string.cancel) { _, _ ->
+                    isAntiAlias = tempIsAntiAlias
+                    isOnlyKorean = tempIsOnlyKorean
+                }
         builder.create().show()
     }
 
@@ -299,7 +318,7 @@ class MainActivity : AppCompatActivity() {
             paint_.typeface = typeFace
         paint_.color = Color.BLACK
         paint_.textSize = fontSize.toFloat()
-        paint_.isAntiAlias = false
+        paint_.isAntiAlias = isAntiAlias
         canvas.drawText("가", _drawX.toFloat(), _drawY.toFloat(), paint_)
         return Bitmap.createScaledBitmap(createBitmap, 256, 256, false)
     }
@@ -330,6 +349,8 @@ class MainActivity : AppCompatActivity() {
         paint = Paint()
         handler = MyHandler()
         fontSize = 16
+        isAntiAlias = true
+        isOnlyKorean = true
         drawX = 0
         drawY = 13
     }

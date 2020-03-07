@@ -8,10 +8,12 @@
     <string name="cancel" translatable="false">취소</string>
     <string name="confirm" translatable="false">확인</string>
     <string name="writing" translatable="false">입력 중입니다...</string>
-    <string name="current_char" translatable="false">현재 글자 : </string>S
+    <string name="current_char" translatable="false">현재 글자 : </string>
     <string name="setting_title" translatable="false">스타일 설정하기</string>
     <string name="set_ttf_file" translatable="false">폰트 파일을 설정해주세요.\n(없을 경우 시스템 폰트로 설정됩니다.)</string>
     <string name="choose_ttf_file" translatable="false">폰트 파일 선택하기</string>
     <string name="path_ttf_file" translatable="false">폰트 경로</string>
     <string name="find_ttf_file" translatable="false">찾기</string>
+    <string name="anti_alias" translatable="false">부드러운 외곽선</string>
+    <string name="only_korean" translatable="false">한글만 생성</string>
 </resources>
