@@ -2,20 +2,56 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:gravity="center" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
     <ImageView android:id="@+id/screen" android:layout_width="match_parent" android:layout_height="0dp" android:src="@drawable/main" android:scaleType="fitCenter" android:layout_weight="1.0" />
     <LinearLayout android:gravity="center" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1.0">
-        <TextView android:layout_width="240dp" android:layout_height="wrap_content" android:text="@string/set_ttf_file" />
+
+        <TextView
+            android:id="@+id/size_text"
+            android:layout_width="240dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="256 × 256"
+            android:textSize="16sp" />
+
+        <SeekBar
+            android:id="@+id/size_seekbar"
+            style="@style/Widget.AppCompat.SeekBar.Discrete"
+            android:layout_width="240dp"
+            android:layout_height="wrap_content"
+            android:max="3"
+            android:progress="0" />
+
         <LinearLayout android:gravity="center" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content">
 
             <EditText
                 android:id="@+id/path"
                 android:layout_width="180dp"
                 android:layout_height="wrap_content"
+                android:editable="false"
                 android:hint="@string/path_ttf_file"
-                android:singleLine="true" />
-            <Button android:id="@+id/find" android:layout_width="60dp" android:layout_height="wrap_content" android:text="@string/find_ttf_file" />
+                android:singleLine="true"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/find"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:text="@string/find_ttf_file"
+                android:textSize="16sp" />
         </LinearLayout>
         <LinearLayout android:gravity="center" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content">
-            <Button android:id="@+id/setting" android:layout_width="120dp" android:layout_height="wrap_content" android:text="@string/setting" />
-            <Button android:id="@+id/make" android:layout_width="120dp" android:layout_height="wrap_content" android:text="@string/make" />
+
+            <Button
+                android:id="@+id/setting"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:text="@string/setting"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/make"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:text="@string/make"
+                android:textSize="16sp" />
         </LinearLayout>
         <ProgressBar android:id="@+id/progress" android:layout_width="240dp" android:layout_height="wrap_content" android:max="11172" style="?android:attr/progressBarStyleHorizontal" />
     </LinearLayout>
