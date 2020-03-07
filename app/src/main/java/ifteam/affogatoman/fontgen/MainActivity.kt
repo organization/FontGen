@@ -1,200 +1,159 @@
 package ifteam.affogatoman.fontgen
 
-import android.app.Activity
-import android.app.AlertDialog
-import android.app.Dialog
-import android.app.ProgressDialog
-import android.content.Context
-import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Bitmap.CompressFormat
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Typeface
-import android.os.Bundle
-import android.os.Environment
-import android.os.Handler
-import android.os.Message
+import android.app.*
+import android.content.*
+import android.graphics.*
+import android.os.*
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import android.view.*
 import android.widget.*
 import android.widget.SeekBar.OnSeekBarChangeListener
+import androidx.appcompat.app.AppCompatActivity
 import com.obsez.android.lib.filechooser.ChooserDialog
 import java.io.*
 
-class MainActivity : Activity() {
-    var base = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888)
+class MainActivity : AppCompatActivity() {
+    var baseBitmap: Bitmap = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888)
     var canvas: Canvas
-    lateinit var find: Button
-    var h: Int
-    var handler: MyHandler
-    lateinit var make: Button
-    var p: Paint
-    lateinit var path: EditText
-    var pb: ProgressBar? = null
-    var pd: ProgressDialog? = null
-    var presize = 0
-    var prex = 0
-    var prey = 0
-    var screen: ImageView? = null
-    lateinit var setting: Button
-    var size: Int
-    lateinit var sizes: SeekBar
-    var tf: Typeface? = null
-    var w: Int
-    lateinit var xs: SeekBar
-    lateinit var ys: SeekBar
+    var paint: Paint
+    var typeFace: Typeface? = null
 
-    internal inner class FontGenOnSeekBarChangeListener(private val mainActivity: MainActivity, private val screenImageView: ImageView) : OnSeekBarChangeListener {
+    var handler: MyHandler
+
+    lateinit var findButton: Button
+    lateinit var makeButton: Button
+    lateinit var settingButton: Button
+    lateinit var pathEditText: EditText
+
+    var screenImageView: ImageView? = null
+    var characterProgressBar: ProgressBar? = null
+    var characterProgressDialog: ProgressDialog? = null
+    lateinit var sizeSeekBar: SeekBar
+    lateinit var xSeekBar: SeekBar
+    lateinit var ySeekBar: SeekBar
+
+    var settingFontSize = 0
+    var settingDrawX = 0
+    var settingDrawY = 0
+
+    var fontSize: Int
+    var drawX: Int
+    var drawY: Int
+
+    internal inner class FontGenOnSeekBarChangeListener(private val mainActivity: MainActivity, private val settingImageView: ImageView) : OnSeekBarChangeListener {
         override fun onStartTrackingTouch(seekBar: SeekBar) {}
-        override fun onProgressChanged(seekBar: SeekBar, i: Int, z: Boolean) {
-            screenImageView.setImageBitmap(mainActivity.getSample(mainActivity.prex, mainActivity.prey + 13, mainActivity.presize))
+        override fun onProgressChanged(seekBar: SeekBar, progress: Int, z: Boolean) {
             when (seekBar.id) {
-                R.id.sizes -> {
-                    mainActivity.presize = i
-                    return
-                }
-                R.id.xs -> {
-                    mainActivity.prex = i - 16
-                    return
-                }
-                R.id.ys -> {
-                    mainActivity.prey = i - 16
-                    return
-                }
-                else -> return
+                R.id.sizes ->  mainActivity.settingFontSize = progress
+                R.id.xs -> mainActivity.settingDrawX = progress - 16
+                R.id.ys -> mainActivity.settingDrawY = progress - 16
+                else -> { }
             }
+            settingImageView.setImageBitmap(mainActivity.getSample(mainActivity.settingDrawX, mainActivity.settingDrawY + 13, mainActivity.settingFontSize))
         }
 
         override fun onStopTrackingTouch(seekBar: SeekBar) {
-            screenImageView.setImageBitmap(mainActivity.getSample(mainActivity.prex, mainActivity.prey + 13, mainActivity.presize))
+            settingImageView.setImageBitmap(mainActivity.getSample(mainActivity.settingDrawX, mainActivity.settingDrawY + 13, mainActivity.settingFontSize))
         }
 
     }
 
-    internal class FontGenOnClickListener(private val mainActivity: MainActivity, private val screenImageView: ImageView) : View.OnClickListener {
+    internal class FontGenOnClickListener(private val mainActivity: MainActivity, private val sampleImageView: ImageView) : View.OnClickListener {
         override fun onClick(view: View) {
-            screenImageView.setImageBitmap(mainActivity.getSample(mainActivity.prex, mainActivity.prey + 13, mainActivity.presize))
             when (view.id) {
                 R.id.sizem -> {
-                    if (this.mainActivity.sizes.progress != 0) {
-                        this.mainActivity.presize--
-                        this.mainActivity.sizes.incrementProgressBy(-1)
+                    if (this.mainActivity.sizeSeekBar.progress != 0) {
+                        this.mainActivity.settingFontSize--
+                        this.mainActivity.sizeSeekBar.incrementProgressBy(-1)
                     }
-                    return
                 }
                 R.id.sizep -> {
-                    if (this.mainActivity.sizes.progress != 16) {
-                        this.mainActivity.presize++
-                        this.mainActivity.sizes.incrementProgressBy(1)
+                    if (this.mainActivity.sizeSeekBar.progress != 16) {
+                        this.mainActivity.settingFontSize++
+                        this.mainActivity.sizeSeekBar.incrementProgressBy(1)
                     }
-                    return
                 }
                 R.id.xm -> {
-                    if (this.mainActivity.xs.progress != 0) {
-                        this.mainActivity.prex--
-                        this.mainActivity.xs.incrementProgressBy(-1)
+                    if (this.mainActivity.xSeekBar.progress != 0) {
+                        this.mainActivity.settingDrawX--
+                        this.mainActivity.xSeekBar.incrementProgressBy(-1)
                     }
-                    return
                 }
                 R.id.xp -> {
-                    if (this.mainActivity.xs.progress != 32) {
-                        this.mainActivity.prex++
-                        this.mainActivity.xs.incrementProgressBy(1)
+                    if (this.mainActivity.xSeekBar.progress != 32) {
+                        this.mainActivity.settingDrawX++
+                        this.mainActivity.xSeekBar.incrementProgressBy(1)
                     }
-                    return
                 }
                 R.id.ym -> {
-                    if (this.mainActivity.ys.progress != 0) {
-                        this.mainActivity.prey--
-                        this.mainActivity.ys.incrementProgressBy(-1)
+                    if (this.mainActivity.ySeekBar.progress != 0) {
+                        this.mainActivity.settingDrawY--
+                        this.mainActivity.ySeekBar.incrementProgressBy(-1)
                     }
-                    return
                 }
                 R.id.yp -> {
-                    if (this.mainActivity.ys.progress != 32) {
-                        this.mainActivity.prey++
-                        this.mainActivity.ys.incrementProgressBy(1)
+                    if (this.mainActivity.ySeekBar.progress != 32) {
+                        this.mainActivity.settingDrawY++
+                        this.mainActivity.ySeekBar.incrementProgressBy(1)
                     }
-                    return
                 }
-                else -> {
-                }
+                else -> { }
             }
+            sampleImageView.setImageBitmap(mainActivity.getSample(mainActivity.settingDrawX, mainActivity.settingDrawY + 13, mainActivity.settingFontSize))
         }
 
     }
 
-    internal inner class FontGenRunnable(private val mainActivity: MainActivity, private val size: Int) : Runnable {
+    internal inner class FontGenRunnable(private val mainActivity: MainActivity, private val fontSize_: Int) : Runnable {
         var current = System.currentTimeMillis()
-        var glyph = 172
+        var glyph = 0xAC
         override fun run() {
-            var stringBuffer: StringBuffer
-            var stringBuffer2: StringBuffer
             try {
-                this.mainActivity.base = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888)
-                this.mainActivity.canvas = Canvas(this.mainActivity.base)
-                if (this.mainActivity.tf != null) {
-                    this.mainActivity.p.typeface = this.mainActivity.tf
-                }
-                this.mainActivity.p.color = -1
-                this.mainActivity.p.textSize = size.toFloat()
-                this.mainActivity.p.isAntiAlias = true
+                //Disabled All FileI/O methods due to not-working-error.
+
+                this.mainActivity.baseBitmap = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888)
+                this.mainActivity.canvas = Canvas(this.mainActivity.baseBitmap)
+                if (this.mainActivity.typeFace != null)
+                    this.mainActivity.paint.typeface = this.mainActivity.typeFace
+                this.mainActivity.paint.color = Color.WHITE
+                this.mainActivity.paint.textSize = fontSize_.toFloat()
+                this.mainActivity.paint.isAntiAlias = true
                 var i = 44032
                 while (i <= 55203) {
-                    var file: File?
-                    var stringBuffer3: StringBuffer
-                    var stringBuffer4: StringBuffer
-                    var file3: File
+                    //var file: File
                     Thread.sleep(1)
-                    val canvas3 = this.mainActivity.canvas
-                    stringBuffer = StringBuffer()
-                    canvas3.drawText(stringBuffer.append(i.toChar()).append("").toString(), this.mainActivity.w.toFloat(), this.mainActivity.h.toFloat(), this.mainActivity.p)
-                    this.mainActivity.w += 16
+                    this.mainActivity.canvas.drawText(i.toChar().toString(), this.mainActivity.drawX.toFloat(), this.mainActivity.drawY.toFloat(), this.mainActivity.paint)
+                    this.mainActivity.drawX += 16
                     val myHandler = this.mainActivity.handler
-                    val num = i
 
-                    myHandler.sendMessage(myHandler.obtainMessage(100, num))
+                    myHandler.sendMessage(myHandler.obtainMessage(100, i))
                     if (i == 44033) {
-                        stringBuffer2 = StringBuffer()
-                        stringBuffer3 = StringBuffer()
-                        stringBuffer4 = StringBuffer()
-                        file = File(stringBuffer2.append(stringBuffer3.append(stringBuffer4.append(Environment.getExternalStorageDirectory()).append("/affogatoman/FontGen/").toString()).append(current).toString()).append("/.nomedia").toString())
-                        file3 = file
-                        var b = file.parentFile.mkdirs();
-                        file3.createNewFile()
+                        //file = File(Environment.getExternalStorageDirectory().absolutePath+"/FontGen/"+current.toString()+"/.nomedia")
+                        //file.parentFile.mkdirs()
+                        //file.createNewFile()
                     }
                     if ((i - 44032) % 16 == 15 && i != 44032) {
-                        this.mainActivity.w = 0
-                        this.mainActivity.h += 16
+                        this.mainActivity.drawX = this.mainActivity.settingDrawX;
+                        this.mainActivity.drawY += 16
                     }
-                    if (this.mainActivity.h > 254 || i == 55203) {
-                        stringBuffer2 = StringBuffer()
-                        stringBuffer3 = StringBuffer()
-                        stringBuffer4 = StringBuffer()
-                        val stringBuffer5 = StringBuilder()
-                        val stringBuffer6 = StringBuilder()
-                        file = File(stringBuffer2.append(stringBuffer3.append(stringBuffer4.append(stringBuffer5.append(stringBuffer6.append(Environment.getExternalStorageDirectory()).append("/아포카토맨/FontGen/").toString()).append(current).toString()).append("/glyph_").toString()).append(Integer.toHexString(glyph).toUpperCase()).toString()).append(".png").toString())
-                        file3 = file
-                        file3.parentFile.mkdirs()
-                        val fileOutputStream: OutputStream = FileOutputStream(file3)
-                        val bufferedOutputStream: OutputStream = BufferedOutputStream(fileOutputStream)
-                        this.mainActivity.base.compress(CompressFormat.PNG, 100, bufferedOutputStream)
-                        bufferedOutputStream.close()
-                        fileOutputStream.close()
+                    if (this.mainActivity.drawY > 254 || i == 55203) {
+                        //file = File(Environment.getExternalStorageDirectory().absolutePath+"/FontGen/"+current.toString()+"/glyph_"+"%X".format(glyph)+".png")
+                        //file.parentFile.mkdirs()
+                        //val fileOutputStream: OutputStream = FileOutputStream(file)
+                        //val bufferedOutputStream: OutputStream = BufferedOutputStream(fileOutputStream)
+                        //this.mainActivity.baseBitmap.compress(CompressFormat.PNG, 100, bufferedOutputStream)
+                        //bufferedOutputStream.close()
+                        //fileOutputStream.close()
                         if (i != 55203) {
-                            this.mainActivity.base.eraseColor(0)
+                            this.mainActivity.baseBitmap.eraseColor(Color.TRANSPARENT)
                         }
-                        this.mainActivity.h = this.mainActivity.prey + 13
+                        this.mainActivity.drawY = this.mainActivity.settingDrawY + 13
                         glyph++
                     }
                     i++
                 }
             } catch (e: IOException) {
-                stringBuffer = StringBuffer()
-                val i2 = Log.i(TAG, e.toString())
+                Log.i(TAG, e.toString())
             }
         }
 
@@ -203,19 +162,17 @@ class MainActivity : Activity() {
     inner class MyHandler : Handler() {
         override fun handleMessage(message: Message) {
             if (message.what == 100) {
-                screen!!.setImageBitmap(base)
-                val progressDialog = pd
-                val stringBuffer = StringBuilder()
-                progressDialog!!.setMessage(stringBuffer.append("현재 글자 : ").append((message.obj as Int).toInt().toChar()).toString())
-                pb!!.incrementProgressBy(1)
-                pd!!.incrementProgressBy(1)
+                screenImageView!!.setImageBitmap(baseBitmap)
+                characterProgressDialog!!.setMessage(getString(R.string.current_char)+(message.obj as Int).toChar().toString())
+                characterProgressBar!!.incrementProgressBy(1)
+                characterProgressDialog!!.incrementProgressBy(1)
                 if (message.obj as Int == 55203) {
-                    make.isClickable = true
-                    setting.isClickable = true
-                    pb!!.progress = 0
-                    pd!!.dismiss()
-                    w = 0
-                    h = 13
+                    makeButton.isEnabled = true
+                    settingButton.isEnabled = true
+                    characterProgressBar!!.progress = 0
+                    characterProgressDialog!!.dismiss()
+                    drawX = 0
+                    drawY = 13
                 }
             }
             super.handleMessage(message)
@@ -224,30 +181,27 @@ class MainActivity : Activity() {
 
     public override fun onCreate(bundle: Bundle?) {
         super.onCreate(bundle)
+
         setContentView(R.layout.main)
-        pb = findViewById(R.id.progress)
-        path = findViewById(R.id.path)
-        find = findViewById(R.id.find)
-        screen = findViewById(R.id.screen)
-        setting = findViewById(R.id.setting)
-        make = findViewById(R.id.make)
+        characterProgressBar = findViewById(R.id.progress)
+        pathEditText = findViewById(R.id.path)
+        findButton = findViewById(R.id.find)
+        screenImageView = findViewById(R.id.screen)
+        settingButton = findViewById(R.id.setting)
+        makeButton = findViewById(R.id.make)
         val viewOnClickListener = View.OnClickListener { view ->
             try {
                 when (view.id) {
                     R.id.find -> {
-                        val fileChooserDialog = ChooserDialog(this@MainActivity)
-                                                    .withFilter(false, true, "ttf", "otf")
-                                                    .withStartFile(Environment.getExternalStorageDirectory().absolutePath)
-                                                    .withResources(R.string.choose_file, R.string.title_choose, R.string.dialog_cancel)
-                                                    .withChosenListener(object: ChooserDialog.Result {
-                                                        override fun onChoosePath(pathStr: String, file: File) {
-                                                            path.setText(file!!.absolutePath)
-                                                            tf = Typeface.createFromFile(file)
-                                                        }
-                                                    })
-                                                    .build()
-                                                    .show();
-                        Log.i("AFFO", Environment.getExternalStorageDirectory().absolutePath);
+                        ChooserDialog(this@MainActivity)
+                                .withFilter(false, true, "ttf", "otf")
+                                .withResources(R.string.choose_ttf_file, R.string.choose_ttf_file, R.string.cancel)
+                                .withChosenListener { _, file ->
+                                    pathEditText.setText(file.absolutePath)
+                                    typeFace = Typeface.createFromFile(file)
+                                }
+                                .build()
+                                .show()
                         /*
                         var fileChooserDialog = FileChooserDialog(this@MainActivity)
                         val fileChooserDialog3 = fileChooserDialog
@@ -263,54 +217,48 @@ class MainActivity : Activity() {
                         })
                         fileChooserDialog3.show()
                         */
-                        return@OnClickListener
                     }
-                    R.id.setting -> {
-                        showSettingDialog()
-                        return@OnClickListener
-                    }
+                    R.id.setting -> showSettingDialog()
                     R.id.make -> {
-                        pd = ProgressDialog(this@MainActivity)
-                        pd!!.setProgressStyle(1)
-                        pd!!.setTitle("입력중입니다...")
-                        pd!!.setMessage("Wait")
-                        pd!!.max = 11172
-                        pd!!.show()
-                        makeFont(size)
-                        setting.isClickable = false
-                        make.isClickable = false
-                        return@OnClickListener
+                        characterProgressDialog = ProgressDialog(this@MainActivity)
+                        characterProgressDialog!!.setProgressStyle(1)
+                        characterProgressDialog!!.setTitle(R.string.writing)
+                        characterProgressDialog!!.setMessage("Wait")
+                        characterProgressDialog!!.max = 11172
+                        characterProgressDialog!!.show()
+                        makeFont(fontSize)
+                        settingButton.isEnabled = false
+                        makeButton.isEnabled = false
                     }
-                    else -> {
-                    }
+                    else -> return@OnClickListener
                 }
             } catch (e: Exception) {
                 val stringBuffer = StringBuilder()
                 Log.i(TAG, stringBuffer.append(e).append("").toString())
             }
         }
-        make.setOnClickListener(viewOnClickListener)
-        find.setOnClickListener(viewOnClickListener)
-        setting.setOnClickListener(viewOnClickListener)
+        makeButton.setOnClickListener(viewOnClickListener)
+        findButton.setOnClickListener(viewOnClickListener)
+        settingButton.setOnClickListener(viewOnClickListener)
     }
 
     private fun showSettingDialog() {
-        prex = w
-        prey = h - 13
-        presize = size
+        settingDrawX = drawX
+        settingDrawY = drawY - 13
+        settingFontSize = fontSize
         val inflate = View.inflate(this, R.layout.setting, null)
         val imageView = inflate.findViewById<ImageView>(R.id.screen2)
-        sizes = inflate.findViewById(R.id.sizes)
-        xs = inflate.findViewById(R.id.xs)
-        ys = inflate.findViewById(R.id.ys)
-        sizes.progress = size
-        xs.progress = w + 16
-        ys.progress = h + 3
-        imageView.setImageBitmap(getSample(w, h, size))
+        sizeSeekBar = inflate.findViewById(R.id.sizes)
+        xSeekBar = inflate.findViewById(R.id.xs)
+        ySeekBar = inflate.findViewById(R.id.ys)
+        sizeSeekBar.progress = fontSize
+        xSeekBar.progress = drawX + 16
+        ySeekBar.progress = drawY + 3
+        imageView.setImageBitmap(getSample(drawX, drawY, fontSize))
         val fontGenOnSeekBarChangeListener = FontGenOnSeekBarChangeListener(this, imageView)
-        sizes.setOnSeekBarChangeListener(fontGenOnSeekBarChangeListener)
-        xs.setOnSeekBarChangeListener(fontGenOnSeekBarChangeListener)
-        ys.setOnSeekBarChangeListener(fontGenOnSeekBarChangeListener)
+        sizeSeekBar.setOnSeekBarChangeListener(fontGenOnSeekBarChangeListener)
+        xSeekBar.setOnSeekBarChangeListener(fontGenOnSeekBarChangeListener)
+        ySeekBar.setOnSeekBarChangeListener(fontGenOnSeekBarChangeListener)
         val button = inflate.findViewById<Button>(R.id.sizem)
         val button2 = inflate.findViewById<Button>(R.id.sizep)
         val button3 = inflate.findViewById<Button>(R.id.xm)
@@ -326,48 +274,45 @@ class MainActivity : Activity() {
         button6.setOnClickListener(fontGenOnClickListener)
         val builder = AlertDialog.Builder(this)
                 .setView(inflate)
-                .setTitle("스타일 설정하기")
-                .setPositiveButton("확인") { dialogInterface, i ->
-                    w = prex
-                    h = prey + 13
-                    size = presize
+                .setTitle(R.string.setting_title)
+                .setPositiveButton(R.string.confirm) { _, _ ->
+                    drawX = settingDrawX
+                    drawY = settingDrawY + 13
+                    fontSize = settingFontSize
                 }
-                .setNegativeButton("취소", null)
+                .setNegativeButton(R.string.cancel, null)
         builder.create().show()
     }
 
-    private fun makeFont(i: Int) {
-        val fontGenRunnable = FontGenRunnable(this, i)
+    private fun makeFont(_fontSize: Int) {
+        val fontGenRunnable = FontGenRunnable(this, _fontSize)
         val thread = Thread(fontGenRunnable)
         thread.start()
     }
 
-    fun getSample(i: Int, i2: Int, i3: Int): Bitmap {
+    fun getSample(_drawX: Int, _drawY: Int, fontSize: Int): Bitmap {
         val createBitmap = Bitmap.createBitmap(16, 16, Bitmap.Config.ARGB_8888)
-        createBitmap.eraseColor(-1)
+        createBitmap.eraseColor(Color.WHITE)
         val canvas = Canvas(createBitmap)
-        val paint = Paint()
-        if (tf != null) {
-            val typeface = paint.setTypeface(tf)
-        }
-        paint.color = -16777216
-        paint.textSize = i3.toFloat()
-        paint.isAntiAlias = false
-        canvas.drawText("가", i.toFloat(), i2.toFloat(), paint)
+        val paint_ = Paint()
+        if (typeFace != null)
+            paint_.typeface = typeFace
+        paint_.color = Color.BLACK
+        paint_.textSize = fontSize.toFloat()
+        paint_.isAntiAlias = false
+        canvas.drawText("가", _drawX.toFloat(), _drawY.toFloat(), paint_)
         return Bitmap.createScaledBitmap(createBitmap, 256, 256, false)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        val add = menu.add(1, 123, 1, "정보")
+        val add = menu.add(1, 123, 1, R.string.info)
         return super.onCreateOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(menuItem: MenuItem): Boolean {
-        val context: Context = this
         if (menuItem.itemId == 123) {
-            val intent: Intent
             try {
-                intent = Intent(context, Class.forName("ifteam.affogatoman.fontgen.LicenseActivity"))
+                val intent = Intent(this, Class.forName("ifteam.affogatoman.fontgen.LicenseActivity"))
                 startActivity(intent)
             } catch (e: Throwable) {
                 throw NoClassDefFoundError(e.message)
@@ -381,11 +326,11 @@ class MainActivity : Activity() {
     }
 
     init {
-        canvas = Canvas(base)
-        p = Paint()
+        canvas = Canvas(baseBitmap)
+        paint = Paint()
         handler = MyHandler()
-        size = 16
-        w = 0
-        h = 13
+        fontSize = 16
+        drawX = 0
+        drawY = 13
     }
 }

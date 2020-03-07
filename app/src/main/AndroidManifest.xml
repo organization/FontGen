@@ -9,6 +9,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".LicenseActivity" />
+        <activity android:name=".LicenseActivity"/>
     </application>
 </manifest>
