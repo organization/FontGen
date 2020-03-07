@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.obsez.android.lib.filechooser.ChooserDialog
+import kotlinx.android.synthetic.main.main.*
 import kotlinx.android.synthetic.main.setting.*
 import java.io.*
 import kotlin.math.pow
@@ -141,8 +142,8 @@ class MainActivity : AppCompatActivity() {
 
         override fun run() {
             try {
-                var startX = drawPaddingX
-                var startY = drawPaddingY
+                var startX = 0
+                var startY = 0
 
                 if (!isOnlyKorean) {
                     glyph = 0x00
@@ -158,7 +159,7 @@ class MainActivity : AppCompatActivity() {
                 paint.textSize = fontSize_.toFloat()
                 paint.isAntiAlias = isAntiAlias
 
-                val piece: Bitmap = Bitmap.createBitmap(bitmapSize / 16, bitmapSize, Bitmap.Config.ARGB_8888)
+                val piece: Bitmap = Bitmap.createBitmap(bitmapSize / 16, bitmapSize / 16, Bitmap.Config.ARGB_8888)
                 val pieceCanvas = Canvas(piece)
                 val rect = Rect()
 
@@ -170,7 +171,7 @@ class MainActivity : AppCompatActivity() {
                     //Thread.sleep(1)
                     paint.getTextBounds(i.toChar().toString(), 0, 1, rect)
                     Log.i(TAG, rect.left.toString())
-                    pieceCanvas.drawText(i.toChar().toString(), ((bitmapSize / 16) - rect.width()) / 2 - rect.left.toFloat(), bitmapSize * 13.7f / 256, paint)
+                    pieceCanvas.drawText(i.toChar().toString(), (((bitmapSize / 16) - rect.width()) / 2 - rect.left.toFloat()) + drawPaddingX, (bitmapSize * 13.7f / 256) + drawPaddingY, paint)
                     canvas.drawBitmap(piece, startX.toFloat(), startY.toFloat(), null)
                     piece.eraseColor(Color.TRANSPARENT)
                     startX += bitmapSize / 16
@@ -184,10 +185,10 @@ class MainActivity : AppCompatActivity() {
                         file.createNewFile()
                     }
                     if ((i - startChar) % 16 == 15 && i != startChar) {
-                        startX = drawPaddingX
+                        startX = 0
                         startY += bitmapSize / 16
                     }
-                    if (startY - drawPaddingY >= bitmapSize || i == maxCount) {
+                    if (startY >= bitmapSize || i == maxCount) {
                         file = File("${Environment.getExternalStorageDirectory().absolutePath}/FontGen/$current/font/glyph_" + "%02X".format(glyph) + ".png")
                         file.parentFile.mkdirs()
                         val fileOutputStream: OutputStream = FileOutputStream(file)
@@ -198,7 +199,7 @@ class MainActivity : AppCompatActivity() {
                         if (i != maxCount) {
                             baseBitmap.eraseColor(Color.TRANSPARENT)
                         }
-                        startY = drawPaddingY
+                        startY = 0
                         glyph++
                     }
                     i++
@@ -228,12 +229,13 @@ class MainActivity : AppCompatActivity() {
 
                 if (runnable?.stopKey == true)
                     makeButton.text = i.toChar().toString()
-                if ((i - startChar) % 64 == 63 && runnable?.stopKey == true && isFontImageLive == true)
+                if ((i - startChar) % 64 == 63 && runnable?.stopKey == true && isFontImageLive)
                     screenImageView!!.setImageBitmap(baseBitmap)
                 characterProgressBar!!.max = maxCount - startChar
                 characterProgressBar!!.progress = i - startChar
                 if (i == maxCount) {
                     bitmapSizeSeekBar.isEnabled = true
+                    findButton.isEnabled = true
                     makeButton.text = getString(R.string.make)
                     makeButton.isEnabled = true
                     settingButton.text = getString(R.string.setting)
@@ -284,6 +286,7 @@ class MainActivity : AppCompatActivity() {
                     R.id.make -> {
                         makeFont(fontSize)
                         settingButton.text = getString(R.string.cancel)
+                        findButton.isEnabled = false
                         makeButton.isEnabled = false
                         bitmapSizeSeekBar.isEnabled = false
                     }
@@ -367,6 +370,7 @@ class MainActivity : AppCompatActivity() {
     private fun cancelMakeFont() {
         runnable?.stop()
         screenImageView?.setImageResource(R.drawable.main)
+        findButton.isEnabled = true
         bitmapSizeSeekBar.isEnabled = true
         makeButton.isEnabled = true
         makeButton.text = getString(R.string.make)
